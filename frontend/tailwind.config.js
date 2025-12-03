@@ -8,18 +8,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#2bee6c',
-        'background-light': '#f6f8f6',
-        'background-dark': '#102216',
+        primary: 'var(--neon-cyan)',
+        secondary: 'var(--neon-magenta)',
+        ok: 'var(--neon-green)',
+        'background-light': '#f6f6f8',
+        'background-dark': '#0d0c1d',
+        'surface-dark': '#1a1a2e',
       },
       fontFamily: {
-        display: ['Inter', 'sans-serif'],
+        display: ['"Space Grotesk"', 'sans-serif'],
       },
       borderRadius: {
         DEFAULT: '0.25rem',
         lg: '0.5rem',
         xl: '0.75rem',
         full: '9999px',
+      },
+      screens: {
+        xs: '480px',
+      },
+      animation: {
+        grid: 'grid 15s linear infinite',
+      },
+      keyframes: {
+        grid: {
+          '0%': { transform: 'translateY(-50%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
       },
     },
   },

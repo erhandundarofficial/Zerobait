@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: dark;
+  --neon-cyan: #00FFFF;
+  --neon-magenta: #FF00FF;
+  --neon-green: #39FF14;
 }
 
 body {
@@ -12,4 +15,21 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Glow utilities for homepage design */
+.glow-cyan {
+  box-shadow: 0 0 5px var(--neon-cyan), 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan), 0 0 60px var(--neon-cyan);
+}
+
+.glow-magenta {
+  box-shadow: 0 0 5px var(--neon-magenta), 0 0 15px var(--neon-magenta), 0 0 30px var(--neon-magenta);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 2px #fff, 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
+}
+
+.text-glow-magenta {
+  text-shadow: 0 0 2px #fff, 0 0 5px var(--neon-magenta), 0 0 10px var(--neon-magenta);
 }
