@@ -1,0 +1,31 @@
+{
+  "key": "email_interceptor",
+  "title": "Email Interceptor",
+  "description": "Identify phishing red flags in emails.",
+  "type": "quiz",
+  "difficulty": "medium",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "Which is a common phishing red flag?",
+      "options": [
+        "Generic greeting like 'Dear user'",
+        "Perfect grammar and spelling",
+        "Email from your own domain"
+      ],
+      "correctIndex": 0,
+      "explanation": "Phishing emails often use generic greetings to target many recipients."
+    },
+    {
+      "id": "q2",
+      "prompt": "What should you check before clicking a link in an email?",
+      "options": [
+        "The sender’s profile picture",
+        "The preview text length",
+        "The actual URL behind the link"
+      ],
+      "correctIndex": 2,
+      "explanation": "Hover the link to inspect the real destination URL."
+    }
+  ]
+}

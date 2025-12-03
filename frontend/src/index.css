@@ -7,7 +7,7 @@
 }
 
 body {
-  @apply font-display bg-background-light dark:bg-background-dark text-white;
+  @apply font-display bg-gray-950 text-gray-100 antialiased;
 }
 
 #root {

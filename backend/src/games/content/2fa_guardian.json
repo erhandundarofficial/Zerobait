@@ -1,0 +1,31 @@
+{
+  "key": "2fa_guardian",
+  "title": "2FA Guardian",
+  "description": "Master two-factor authentication best practices.",
+  "type": "quiz",
+  "difficulty": "hard",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "Which 2FA method is generally strongest?",
+      "options": [
+        "SMS codes",
+        "Authenticator app or hardware key",
+        "Email codes"
+      ],
+      "correctIndex": 1,
+      "explanation": "SMS can be vulnerable to SIM swaps; hardware keys/app-based MFA are stronger."
+    },
+    {
+      "id": "q2",
+      "prompt": "A site asks you to enter a recovery code. What’s best practice?",
+      "options": [
+        "Store in a password manager",
+        "Email it to yourself",
+        "Screenshot and save to photos"
+      ],
+      "correctIndex": 0,
+      "explanation": "Password managers securely store recovery codes alongside credentials."
+    }
+  ]
+}

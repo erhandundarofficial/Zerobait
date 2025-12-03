@@ -1,0 +1,31 @@
+{
+  "key": "url_detective",
+  "title": "URL Detective",
+  "description": "Spot suspicious URLs and learn what to watch for.",
+  "type": "quiz",
+  "difficulty": "easy",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "Which URL looks most suspicious?",
+      "options": [
+        "https://support.google.com/account",
+        "https://goog1e.com-login.secure-update.net",
+        "https://accounts.google.com/ServiceLogin"
+      ],
+      "correctIndex": 1,
+      "explanation": "Lookalike domain and extra subdomains are classic phishing signals."
+    },
+    {
+      "id": "q2",
+      "prompt": "What does the '@' symbol in a URL often indicate?",
+      "options": [
+        "It’s required for secure login pages",
+        "It can be used to obscure the real destination",
+        "It improves SEO"
+      ],
+      "correctIndex": 1,
+      "explanation": "Everything before '@' can be ignored by the browser for navigation."
+    }
+  ]
+}

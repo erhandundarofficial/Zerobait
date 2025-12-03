@@ -1,0 +1,31 @@
+{
+  "key": "social_sleuth",
+  "title": "Social Sleuth",
+  "description": "Recognize social engineering tricks.",
+  "type": "quiz",
+  "difficulty": "medium",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "If someone urges immediate action to avoid account closure, this is likely…",
+      "options": [
+        "Routine maintenance",
+        "A sense-of-urgency tactic",
+        "A secure 2FA prompt"
+      ],
+      "correctIndex": 1,
+      "explanation": "Creating urgency is a common manipulation technique."
+    },
+    {
+      "id": "q2",
+      "prompt": "They ask for your one-time code to 'verify identity'. You should…",
+      "options": [
+        "Share it quickly",
+        "Ask for a callback",
+        "Never share OTP codes"
+      ],
+      "correctIndex": 2,
+      "explanation": "OTP codes are secret and should never be shared."
+    }
+  ]
+}
