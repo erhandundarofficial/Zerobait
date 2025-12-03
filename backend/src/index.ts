@@ -4,6 +4,7 @@ import cors from 'cors'
 import * as dotenv from 'dotenv'
 import scanRouter from './routes/scan'
 import gamesRouter from './routes/games'
+import authRouter from './routes/auth'
 
 dotenv.config()
 
@@ -15,6 +16,7 @@ app.use(express.json())
 
 app.use('/api', scanRouter)
 app.use('/api', gamesRouter)
+app.use('/api', authRouter)
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', service: 'zerobait-backend' })

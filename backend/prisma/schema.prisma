@@ -9,7 +9,9 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
+  email     String?  @unique
+  username  String?  @unique
+  passwordHash String?
   name      String?
   googleId  String?  @unique
   imageUrl  String?

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
 
 type PublicQuestion = {
   id: string
@@ -55,6 +56,7 @@ type PublicGameContent = {
 
 export default function GamePlayPage() {
   const { key } = useParams<{ key: string }>()
+  const { user } = useAuth()
   const [game, setGame] = useState<PublicGameContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -100,7 +102,7 @@ export default function GamePlayPage() {
       const res = await fetch(`http://localhost:4000/api/games/${encodeURIComponent(gameKey)}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers, userId: getOrCreatePlayerId() }),
+        body: JSON.stringify({ answers, userId: user?.id ?? getOrCreatePlayerId() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Submission failed')

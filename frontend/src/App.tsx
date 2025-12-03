@@ -1,6 +1,9 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from './auth/AuthProvider'
 
 function App() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   return (
     <div className="font-display min-h-screen bg-gray-950 text-gray-100">
       <div className="relative flex min-h-screen w-full flex-col">
@@ -36,12 +39,32 @@ function App() {
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-emerald-400/15 px-4 text-sm font-bold leading-normal text-emerald-300 transition-colors hover:bg-emerald-400/25">
-                <span className="truncate">Log In</span>
-              </button>
-              <button className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-emerald-400 px-4 text-sm font-bold leading-normal text-gray-900 transition-colors hover:bg-emerald-300">
-                <span className="truncate">Sign Up</span>
-              </button>
+              {!user ? (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-emerald-400/15 px-4 text-sm font-bold leading-normal text-emerald-300 transition-colors hover:bg-emerald-400/25"
+                  >
+                    <span className="truncate">Log In</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-emerald-400 px-4 text-sm font-bold leading-normal text-gray-900 transition-colors hover:bg-emerald-300"
+                  >
+                    <span className="truncate">Sign Up</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-300">Hello, <span className="text-emerald-300 font-semibold">{user.username ?? 'user'}</span></span>
+                  <button
+                    onClick={() => { logout(); navigate('/'); }}
+                    className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white/10 px-3 text-xs font-semibold leading-normal text-gray-200 transition-colors hover:bg-white/20"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
           </nav>
         </header>
