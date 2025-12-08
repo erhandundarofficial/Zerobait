@@ -5,10 +5,12 @@ function App() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const isHome = location.pathname === '/'
-  const isLogin = location.pathname === '/login'
-  const isSignup = location.pathname === '/signup'
-  const frameless = isHome || isLogin || isSignup
+  const path = location.pathname
+  const isHome = path === '/'
+  const isLogin = path === '/login'
+  const isSignup = path === '/signup'
+  const isGames = path.startsWith('/games')
+  const frameless = isHome || isLogin || isSignup || isGames
   return (
     <div className={`font-display min-h-screen ${frameless ? '' : 'bg-gray-950 text-gray-100'}`}>
       <div className="relative flex min-h-screen w-full flex-col">
