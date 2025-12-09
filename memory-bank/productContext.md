@@ -20,7 +20,9 @@ Phishing attacks disproportionately hurt vulnerable users: kids, older adults, a
     - WARNING / SUSPICIOUS
     - COMMUNITY REPORTED
     - UNKNOWN
-  - User can expand details to see why (e.g., "Reported by X users", "Suspicious domain pattern", etc.).
+  - A short AI summary explains the situation in plain language (no labels or scores in text).
+  - A risk score (0–100) is visualized via UI elements (badge/progress bar).
+  - User can expand technical details (VirusTotal stats, SSL Labs endpoints, WHOIS creation date, screenshot if available).
 
 - **Learn & Play:**
   - After or instead of scanning, user can go to an Education / Games area.

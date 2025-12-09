@@ -6,6 +6,7 @@ import scanRouter from './routes/scan'
 import gamesRouter from './routes/games'
 import authRouter from './routes/auth'
 import progressRouter from './routes/progress'
+import aiRouter from './routes/ai'
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ app.use('/api', scanRouter)
 app.use('/api', gamesRouter)
 app.use('/api', authRouter)
 app.use('/api', progressRouter)
+app.use('/api', aiRouter)
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', service: 'zerobait-backend' })

@@ -1,7 +1,7 @@
 # Zerobait – Project Brief
 
 ## Overview
-Zerobait is a B2C web application that helps everyday internet users detect phishing threats and learn how to avoid them through gamified education. Users can scan URLs for potential phishing, report suspicious sites, play security mini-games, and compete on a global leaderboard.
+Zerobait is a B2C web application that helps everyday internet users detect phishing threats and learn how to avoid them through gamified education. Users can scan URLs for potential phishing, report suspicious sites, play security mini-games, and compete on a global leaderboard. The scanner uses a hybrid AI-powered analysis that aggregates external threat intelligence and produces a concise explanation via Gemini.
 
 ## Goals
 - Provide a simple, friendly phishing URL checker that anyone (kids, older adults, non-technical people) can use.
@@ -13,8 +13,10 @@ Zerobait is a B2C web application that helps everyday internet users detect phis
 - Public web app (B2C) accessible to everyone.
 - URL scanning flow:
   - User submits a URL.
-  - System classifies it as safe / suspicious / community-reported / unknown.
-  - Show simple explanations and educational hints.
+  - System classifies it as safe / suspicious / community-reported / unknown and returns an AI-written summary.
+  - Backend aggregates external signals (VirusTotal, Google Safe Browsing, WhoisXML, SSL Labs, screenshot) and calls Gemini for a short, human-readable explanation.
+  - API: `POST /api/ai/analyze` returns `{ ai_summary, risk_score, technical_details }`.
+  - Results are cached in Postgres (`scan_results` JSONB) for 30 days to reduce latency and cost.
 - User accounts with Google Single Sign-On (SSO).
 - Educational mini-games and small “courses” on phishing and online safety.
 - Scoring system that tracks user progress across games/courses.

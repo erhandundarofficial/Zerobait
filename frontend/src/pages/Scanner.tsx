@@ -1,20 +1,16 @@
 import { useState } from 'react'
 
-export type ScanVerdict = 'SAFE' | 'WARNING' | 'UNKNOWN' | 'COMMUNITY_REPORTED'
-
-export type ScanResponse = {
-  url: string
-  normalizedUrl: string
-  verdict: ScanVerdict
-  reasons: string[]
-  reportCount: number
+type AiScanResponse = {
+  ai_summary: string
+  risk_score: number
+  technical_details: any
 }
 
 export default function ScannerPage() {
   const [url, setUrl] = useState('')
   const [isScanning, setIsScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
-  const [scanResult, setScanResult] = useState<ScanResponse | null>(null)
+  const [aiResult, setAiResult] = useState<AiScanResponse | null>(null)
   const [isReporting, setIsReporting] = useState(false)
   const [reportMessage, setReportMessage] = useState<string | null>(null)
 
@@ -31,7 +27,7 @@ export default function ScannerPage() {
 
     setIsScanning(true)
     try {
-      const response = await fetch('http://localhost:4000/api/scan', {
+      const response = await fetch('http://localhost:4000/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: trimmed }),
@@ -39,23 +35,23 @@ export default function ScannerPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        setScanError(data.error || 'Failed to scan URL.')
-        setScanResult(null)
+        setScanError((data as any).error || 'Failed to analyze URL.')
+        setAiResult(null)
         return
       }
 
-      const data = (await response.json()) as ScanResponse
-      setScanResult(data)
+      const data = (await response.json()) as AiScanResponse
+      setAiResult(data)
     } catch (error) {
-      setScanError('Network error while scanning URL.')
-      setScanResult(null)
+      setScanError('Network error while analyzing URL.')
+      setAiResult(null)
     } finally {
       setIsScanning(false)
     }
   }
 
   async function handleReport() {
-    if (!scanResult) return
+    if (!url.trim()) return
 
     setIsReporting(true)
     setReportMessage(null)
@@ -63,7 +59,7 @@ export default function ScannerPage() {
       const response = await fetch('http://localhost:4000/api/report-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scanResult.url }),
+        body: JSON.stringify({ url: url.trim() }),
       })
 
       const data = await response.json().catch(() => ({}))
@@ -73,24 +69,23 @@ export default function ScannerPage() {
       }
 
       setReportMessage('Thanks for your report!')
-      setScanResult((current) =>
-        current ? { ...current, reportCount: data.reportCount ?? current.reportCount } : current,
-      )
     } catch (error) {
       setReportMessage('Network error while reporting URL.')
     } finally {
       setIsReporting(false)
     }
   }
-
-  const verdictColorClasses: Record<ScanVerdict, string> = {
-    SAFE: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-    WARNING: 'border-red-500/30 bg-red-500/10 text-red-300',
-    UNKNOWN: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
-    COMMUNITY_REPORTED: 'border-orange-500/30 bg-orange-500/10 text-orange-300',
+  const isIdle = !aiResult
+  const risk = aiResult?.risk_score ?? 0
+  const riskLevel = isIdle ? 'IDLE' : risk >= 70 ? 'HIGH' : risk >= 40 ? 'MEDIUM' : 'LOW'
+  const verdictColorClasses: Record<string, string> = {
+    IDLE: 'border-white/20 bg-white/5 text-gray-200',
+    HIGH: 'border-red-500/30 bg-red-500/10 text-red-300',
+    MEDIUM: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
+    LOW: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
   }
 
-  const currentVerdict = scanResult?.verdict ?? 'SAFE'
+  const currentVerdict = isIdle ? 'IDLE' : riskLevel
 
   return (
     <div className="w-full max-w-3xl">
@@ -134,30 +129,35 @@ export default function ScannerPage() {
         >
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
             <span className="material-symbols-outlined text-4xl">
-              {currentVerdict === 'WARNING' ? 'gpp_bad' : 'verified_user'}
+              {isIdle ? 'help' : riskLevel === 'HIGH' ? 'gpp_bad' : riskLevel === 'MEDIUM' ? 'warning' : 'verified_user'}
             </span>
           </div>
           <div className="space-y-2">
             <h3 className="text-2xl font-bold">
-              {currentVerdict === 'SAFE' && 'SAFE'}
-              {currentVerdict === 'WARNING' && 'WARNING'}
-              {currentVerdict === 'UNKNOWN' && 'CHECK CAREFULLY'}
-              {currentVerdict === 'COMMUNITY_REPORTED' && 'COMMUNITY REPORTED'}
+              {isIdle ? 'READY TO SCAN' : riskLevel === 'HIGH' ? 'HIGH RISK' : riskLevel === 'MEDIUM' ? 'MODERATE RISK' : 'LOW RISK'}
             </h3>
             <p className="text-gray-200">
-              {scanResult
-                ? `Reports: ${scanResult.reportCount} • URL: ${scanResult.normalizedUrl}`
-                : 'Scan a URL to see results from the Zerobait engine.'}
+              {aiResult ? `URL: ${url.trim()}` : 'Scan a URL to see results from the Zerobait engine.'}
             </p>
-            {scanResult && scanResult.reasons.length > 0 && (
-              <ul className="mt-2 list-disc space-y-1 text-left text-sm text-gray-200">
-                {scanResult.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
+            {aiResult && (
+              <p className="text-gray-100 text-lg font-semibold max-w-3xl mx-auto">{aiResult.ai_summary}</p>
+            )}
+            {aiResult && (
+              <div className="mt-4 w-full max-w-[560px] mx-auto text-left">
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold">Risk Score</span>
+                  <span>{risk}/100</span>
+                </div>
+                <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className={`h-full ${riskLevel === 'HIGH' ? 'bg-red-500' : riskLevel === 'MEDIUM' ? 'bg-yellow-400' : 'bg-emerald-400'}`}
+                    style={{ width: `${Math.min(100, Math.max(0, risk))}%` }}
+                  />
+                </div>
+              </div>
             )}
           </div>
-          {scanResult && (
+          {aiResult && (
             <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
@@ -171,6 +171,45 @@ export default function ScannerPage() {
             </div>
           )}
         </div>
+
+        {aiResult && (
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 w-full">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 className="mb-2 text-sm font-bold text-white/90">VirusTotal</h4>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
+{JSON.stringify(aiResult.technical_details?.virusTotal?.data?.attributes?.last_analysis_stats ?? aiResult.technical_details?.virusTotal, null, 2)}
+              </pre>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 className="mb-2 text-sm font-bold text-white/90">SSL Labs</h4>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
+{JSON.stringify(aiResult.technical_details?.sslLabs?.endpoints ?? aiResult.technical_details?.sslLabs, null, 2)}
+              </pre>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h4 className="mb-2 text-sm font-bold text-white/90">WHOIS (Domain)</h4>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
+{JSON.stringify(
+  aiResult.technical_details?.whois?.WhoisRecord?.createdDate ??
+    aiResult.technical_details?.whois?.WhoisRecord?.registryData?.createdDate ??
+    aiResult.technical_details?.whois,
+  null,
+  2,
+)}
+              </pre>
+            </div>
+            {aiResult.technical_details?.screenshot?.base64 && (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col items-center">
+                <h4 className="mb-2 text-sm font-bold text-white/90">Screenshot</h4>
+                <img
+                  src={`data:image/png;base64,${aiResult.technical_details.screenshot.base64}`}
+                  alt="Website screenshot"
+                  className="max-h-64 w-auto rounded-lg border border-white/10"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -16,6 +16,7 @@
   - REST API endpoints for:
     - Authentication (Google OAuth 2.0 login, logout, callback).
     - URL scanning and result retrieval.
+    - AI-powered site security analysis (`POST /api/ai/analyze`).
     - Community URL reports.
     - Games metadata (list of games, descriptions, difficulty).
     - Game sessions and answer submissions.
@@ -74,11 +75,13 @@
   - Database connection URLs.
   - Runtime flags (e.g., enable/disable external threat-intel integration).
 
-## URL Detection Approach (MVP)
-- **Rule-Based + Community Signals (No Paid APIs):**
-  - Basic heuristics on URL, host, path (e.g., presence of suspicious keywords, long subdomains, mismatched domain text vs. TLD).
-  - Check against a locally stored list of known bad/flagged domains (populated from community reports and potential open-source lists if used).
-  - Community report count thresholds for escalating from UNKNOWN to COMMUNITY_REPORTED to WARNING.
+## URL Detection Approach (MVP → Hybrid)
+- **Hybrid pipeline: Heuristics + Community + External Intel + AI Summary**
+  - Basic heuristics on URL, host, path.
+  - Community reports influence verdict context.
+  - External intel (parallel): VirusTotal, Google Safe Browsing, WhoisXML (domain age), SSL Labs (TLS), urlscan.io (screenshot).
+  - Gemini generates a concise natural-language explanation (no labels/scores in text).
+  - DB caching layer stores full response (JSONB) for 30 days; cache hit returns immediately.
 
 - **Extensibility for Future:**
   - Design the service layer so more advanced ML models or external scanning APIs can be plugged in later without breaking the frontend.
@@ -88,13 +91,15 @@
 - Avoid rendering untrusted HTML from remote content.
 - Protect authenticated endpoints with session/JWT verification.
 - Rate-limit endpoints that could be abused (e.g., report submissions, scan requests).
+ - Treat external API failures as non-fatal; degrade gracefully and continue with partial data.
 
 ## Important Implementation Paths
 1. **Auth Flow:**
    - Frontend initiates Google login → backend handles OAuth callback → creates/updates user in DB → issues session/JWT → frontend stores session state.
 
 2. **Scan Flow:**
-   - Frontend sends URL to `/api/scan` → backend normalizes and analyzes → reads community reports and heuristics → returns result + explanation → frontend renders card similar to the provided design examples.
+   - Frontend sends URL to `/api/ai/analyze` → backend normalizes and aggregates external intel in parallel (VirusTotal, Google Safe Browsing, WhoisXML, SSL Labs, urlscan screenshot) → Gemini returns a concise natural-language explanation → result is cached in Postgres (`scan_results` JSONB, 30-day TTL) → frontend renders AI summary, risk score, and technical details.
+   - The legacy `/api/scan` route remains for rule-based and community-report verdicts; it can be used alongside the AI analysis if needed.
 
 3. **Game Flow:**
    - Frontend fetches game list → user chooses game → frontend fetches content → user plays through questions → submits answers to backend → backend calculates score and updates user totals → frontend updates progress UI and leaderboard position.

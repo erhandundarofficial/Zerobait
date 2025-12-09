@@ -1,9 +1,9 @@
 # Zerobait – Active Context
 
 ## Current Focus
-- Initialize the Zerobait project structure and Memory Bank.
-- Decide and document the core architecture, stack, and workflows.
-- Prepare for implementation of Phase 0 tasks.
+- Roll out AI-powered URL security analysis across backend and frontend.
+- Maintain DB caching (PostgreSQL JSONB) with a 30-day TTL for scan results.
+- Prepare for Phase 3 – Leaderboard & Social features.
 
 ## Recent Decisions
 - Project name: **Zerobait**.
@@ -16,13 +16,19 @@
 - Detection approach: Rule-based + community reports (no paid APIs).
 - Language/tone: Casual, friendly, gamified, simple; prepared for future multi-language support.
 
+- Implemented hybrid AI analysis:
+  - Aggregates external intel (VirusTotal, Google Safe Browsing, WhoisXML, SSL Labs, urlscan screenshot) in parallel.
+  - Summarizes findings with Gemini; prompt refined to produce concise, label-free, human-readable text (no scores).
+  - Full response cached in `scan_results` (PostgreSQL JSONB) for 30 days; frontend indicates when served from cache.
+- Environment variables documented in `backend/docs/env.example` (includes `DATABASE_URL` and provider API keys).
+
 ## Next Steps (Short-Term)
-- Phase 0 implementation:
-  - Create project folders (`frontend`, `backend`, `memory-bank`).
-  - Initialize frontend React app with Tailwind and apply base layout similar to provided HTML designs.
-  - Initialize backend Express app with basic health check endpoint.
-  - Set up Docker Compose for PostgreSQL and basic backend connectivity.
-  - Initialize Prisma schema with foundational models (User, Url, UrlReport, Game, GameSession, UserScore or similar).
+- Phase 3 – Leaderboard & Social:
+  - Implement `/api/leaderboard` and global leaderboard page.
+  - Integrate cumulative scores and basic reputation signals.
+- AI Analysis polish:
+  - Optional cache bypass (force refresh) and admin tools.
+  - Fine-tune risk scoring weights and details presentation.
 
 ## Important Patterns & Preferences
 - Maintain a clear separation between API routes, business logic, and data layer.

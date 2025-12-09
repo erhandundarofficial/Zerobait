@@ -76,3 +76,13 @@ model ThreatIntelHit {
   urlId String
   url   Url @relation(fields: [urlId], references: [id])
 }
+
+model ScanResult {
+  id        String   @id @default(cuid())
+  url       String   @unique @db.Text
+  riskScore Int
+  data      Json     @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("scan_results")
+}

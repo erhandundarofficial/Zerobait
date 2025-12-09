@@ -24,6 +24,12 @@
 - [x] Display scan results with explanations and a “Report this URL” action.
 - [x] Add minimal rate limiting/abuse protection on scan/report endpoints.
 
+### Enhancements (AI Hybrid Analysis)
+- [x] Implement AI-powered analysis endpoint `POST /api/ai/analyze` (parallel external intel + Gemini summary).
+- [x] Frontend integration for AI summary, risk score visualization, and technical details cards.
+- [x] Refine Gemini prompt to remove labels/markdown and keep output to max 3 concise sentences.
+- [x] Cache full AI response payload in Postgres (`scan_results` JSONB) with 30-day TTL.
+
 ## Phase 2 – Education & Gamification
 **Goal:** Build 5–6 educational experiences and a scoring system.
 
@@ -49,5 +55,6 @@
 ## Current Status
 - Memory Bank initialized and core decisions documented.
 - Phase 0 and Phase 1 completed (scanner working end-to-end).
+- Phase 1 enhancements completed: AI hybrid analysis, frontend integration, caching layer, refined AI prompt.
 - Phase 2 core completed: games/content, APIs, scoring, 5 playable games, Games dashboard, and My Progress page.
 - Next: Begin Phase 3 – Leaderboard & Social Features.

@@ -10,6 +10,7 @@
   - Node.js (LTS)
   - Express for HTTP server and routing.
   - Passport.js (or similar) with Google OAuth 2.0 for SSO.
+  - Gemini (Google Generative Language API) for AI summaries.
 
 - **Database & ORM:**
   - PostgreSQL as the main relational database.
@@ -62,6 +63,7 @@
   - `cors`
   - `dotenv`
   - `passport`, `passport-google-oauth20`
+  - Native `fetch` (Node 18+) for external API calls
   - `cookie-session` or `express-session` (for session-based auth) or JWT stack (to be finalized).
 
 - Shared / Tooling:
@@ -72,3 +74,18 @@
 - Use environment variables to control OAuth credentials, DB URLs, and deployment-specific settings.
 - Keep frontend and backend in a single monorepo for easier coordination (e.g., `/frontend`, `/backend`, `/memory-bank`).
 - Use Docker Compose to spin up Postgres and optionally the backend in one command during development.
+
+## Environment Variables
+- `DATABASE_URL` – Postgres connection string
+- `PORT`, `JWT_SECRET`
+- `GEMINI_API_KEY`, `GEMINI_MODEL` (e.g., `gemini-1.5-flash-latest`, `gemini-2.5-flash`)
+- External intel providers (optional):
+  - `VIRUSTOTAL_API_KEY`
+  - `GOOGLE_SAFE_BROWSING_API_KEY`
+  - `WHOISXML_API_KEY`
+  - `URLSCAN_API_KEY`
+
+## Caching Model
+- Prisma model mapped to `scan_results` (PostgreSQL):
+  - `url` (unique), `riskScore` (int), `data` (JSONB payload of full response), `created_at` (timestamp)
+- TTL: 30 days. Cache hit returns stored result immediately; otherwise compute and upsert.
