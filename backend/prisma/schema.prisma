@@ -63,8 +63,11 @@ model GameSession {
   gameId      String
   game        Game     @relation(fields: [gameId], references: [id])
   score       Int
+  difficulty  String   @default("unknown")
   startedAt   DateTime @default(now())
   completedAt DateTime?
+
+  @@index([userId, gameId, difficulty])
 }
 
 model ThreatIntelHit {

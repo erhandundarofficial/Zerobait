@@ -118,8 +118,9 @@ export default function GamePlayPage() {
       setScore(s)
       saveProgress(gameKey, s, user?.id)
       if (user?.id) {
-        // update UI user score immediately
-        addScore(s)
+        // update UI user score only if server awarded points
+        const delta = typeof data.awardedDelta === 'number' ? data.awardedDelta : 0
+        if (delta > 0) addScore(delta)
       }
     } catch (e: any) {
       setError(e?.message || 'Submission failed')

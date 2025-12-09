@@ -200,14 +200,21 @@ export default function PasswordPuzzlePage() {
     }
   }
 
-  function finishGame() {
+  async function finishGame() {
     if (!difficulty || finishing) return
     setFinishing(true)
     try {
-      const pts = scoreForLevel(difficulty)
       if (user?.id) {
-        // award points to logged-in user
-        addScore(pts)
+        const res = await fetch('http://localhost:4000/api/games/password-puzzle/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ difficulty, userId: user.id }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok) {
+          const delta = typeof data.awardedDelta === 'number' ? data.awardedDelta : 0
+          if (delta > 0) addScore(delta)
+        }
       }
     } finally {
       setFinishing(false)
