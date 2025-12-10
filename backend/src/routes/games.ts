@@ -121,4 +121,95 @@ router.post('/games/password-puzzle/complete', async (
   return res.json({ success: true, awarded, awardedDelta: awarded ? score : 0 })
 })
 
+// Domain Detective completion (award once per difficulty)
+router.post('/games/domain-detective/complete', async (
+  req: Request<unknown, unknown, { difficulty?: string; userId?: string }>,
+  res: Response,
+) => {
+  const { difficulty: dRaw, userId } = req.body
+  const difficulty = typeof dRaw === 'string' && dRaw.trim() ? dRaw.trim().toLowerCase() : 'unknown'
+  const POINTS: Record<string, number> = { easy: 50, medium: 100, hard: 200 }
+  const score = POINTS[difficulty] ?? 0
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' })
+
+  let awarded = false
+  try {
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId } })
+      if (!user) return
+      const game = await tx.game.upsert({
+        where: { key: 'domain_detective' },
+        update: { title: 'Domain Detective', description: 'Spot real vs phishing domains', type: 'quiz' },
+        create: { key: 'domain_detective', title: 'Domain Detective', description: 'Spot real vs phishing domains', type: 'quiz' },
+      })
+      const existing = await (tx.gameSession as any).findFirst({
+        where: {
+          userId: user.id,
+          gameId: game.id,
+          OR: [
+            { difficulty: { equals: difficulty, mode: 'insensitive' } },
+            { difficulty: 'unknown' },
+          ],
+        },
+      })
+      await (tx.gameSession as any).create({ data: { userId: user.id, gameId: game.id, score, difficulty } })
+      if (!existing && score > 0) {
+        await tx.user.update({ where: { id: user.id }, data: { score: user.score + score } })
+        awarded = true
+      }
+    }, { isolationLevel: 'Serializable' })
+  } catch {
+    return res.status(500).json({ error: 'Failed to complete Domain Detective' })
+  }
+
+  return res.json({ success: true, awarded, awardedDelta: awarded ? score : 0 })
+})
+
+// Spot the Phish completion (award once per difficulty if level passed)
+router.post('/games/spot-the-phish/complete', async (
+  req: Request<unknown, unknown, { difficulty?: string; userId?: string; passed?: boolean }>,
+  res: Response,
+) => {
+  const { difficulty: dRaw, userId, passed } = req.body
+  const difficulty = typeof dRaw === 'string' && dRaw.trim() ? dRaw.trim().toLowerCase() : 'unknown'
+  const POINTS: Record<string, number> = { easy: 50, medium: 100, hard: 200 }
+  const score = POINTS[difficulty] ?? 0
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' })
+
+  let awarded = false
+  try {
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId } })
+      if (!user) return
+      const game = await tx.game.upsert({
+        where: { key: 'spot_the_phish' },
+        update: { title: 'Spot the Phish!', description: 'Decide if each email is safe or phishing', type: 'quiz' },
+        create: { key: 'spot_the_phish', title: 'Spot the Phish!', description: 'Decide if each email is safe or phishing', type: 'quiz' },
+      })
+      const existing = await (tx.gameSession as any).findFirst({
+        where: {
+          userId: user.id,
+          gameId: game.id,
+          OR: [
+            { difficulty: { equals: difficulty, mode: 'insensitive' } },
+            { difficulty: 'unknown' },
+          ],
+        },
+      })
+      // Always record a session with a score of 0 when not passed, for history
+      await (tx.gameSession as any).create({ data: { userId: user.id, gameId: game.id, score: passed ? score : 0, difficulty } })
+      if (passed && !existing && score > 0) {
+        await tx.user.update({ where: { id: user.id }, data: { score: user.score + score } })
+        awarded = true
+      }
+    }, { isolationLevel: 'Serializable' })
+  } catch {
+    return res.status(500).json({ error: 'Failed to complete Spot the Phish' })
+  }
+
+  return res.json({ success: true, awarded, awardedDelta: awarded ? score : 0 })
+})
+
 export default router

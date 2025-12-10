@@ -187,6 +187,30 @@ export default function GamesPage() {
                     <span className="text-[10px] uppercase rounded-md bg-white/10 px-2 py-1 text-white/70">easy/med/hard</span>
                     <span className="material-symbols-outlined text-white/60">chevron_right</span>
                   </Link>
+                  <Link
+                    to={`/games/domain-detective`}
+                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-white/90 transition-all hover:bg-secondary/10 hover:border-secondary/40"
+                  >
+                    <span className="material-symbols-outlined text-secondary">public</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">Domain Detective</p>
+                      <p className="text-xs text-white/70 line-clamp-1">Spot the real domains among phishing look-alikes.</p>
+                    </div>
+                    <span className="text-[10px] uppercase rounded-md bg-white/10 px-2 py-1 text-white/70">easy/med/hard</span>
+                    <span className="material-symbols-outlined text-white/60">chevron_right</span>
+                  </Link>
+                  <Link
+                    to={`/games/spot-the-phish`}
+                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-white/90 transition-all hover:bg-secondary/10 hover:border-secondary/40"
+                  >
+                    <span className="material-symbols-outlined text-secondary">mail</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">Spot the Phish!</p>
+                      <p className="text-xs text-white/70 line-clamp-1">Read emails and decide: Safe or Phishing.</p>
+                    </div>
+                    <span className="text-[10px] uppercase rounded-md bg-white/10 px-2 py-1 text-white/70">easy/med/hard</span>
+                    <span className="material-symbols-outlined text-white/60">chevron_right</span>
+                  </Link>
                   {games.map((g) => (
                     <Link
                       key={g.key}

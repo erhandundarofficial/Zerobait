@@ -19,20 +19,52 @@ export default function HomePage() {
   const [reportMessage, setReportMessage] = useState<string | null>(null)
   const [lastScannedUrl, setLastScannedUrl] = useState<string | null>(null)
 
+  function tryNormalize(raw: string): { ok: true; value: string } | { ok: false; error: string } {
+    let s = (raw || '').trim()
+    if (!s) return { ok: false, error: 'Please enter a URL to scan.' }
+    // Strip common wrappers like quotes/angle brackets
+    s = s.replace(/^\s*[<"']+|[>"']+\s*$/g, '')
+    // Default scheme
+    if (!/^https?:\/\//i.test(s)) s = 'https://' + s
+    const attempts: string[] = [s]
+    if (!/^https?:\/\/www\./i.test(s)) attempts.push(s.replace(/^https?:\/\//i, 'https://www.'))
+    for (const cand of attempts) {
+      try {
+        const u = new URL(cand)
+        // Force https, strip query/hash
+        u.protocol = 'https:'
+        u.search = ''
+        u.hash = ''
+        // Normalize host and path
+        u.hostname = u.hostname.toLowerCase()
+        if (!u.pathname || u.pathname === '') u.pathname = '/'
+        if (!u.pathname.endsWith('/')) u.pathname = u.pathname + '/'
+        // Basic validity: must have a dot in hostname
+        if (!u.hostname || !u.hostname.includes('.')) continue
+        return { ok: true, value: u.toString() }
+      } catch {
+        // try next candidate
+      }
+    }
+    return { ok: false, error: 'Please enter a valid URL (e.g., https://www.example.com/).' }
+  }
+
   async function handleScan() {
     setScanError(null)
     setReportMessage(null)
-    const trimmed = url.trim()
-    if (!trimmed) {
-      setScanError('Please enter a URL to scan.')
+    const norm = tryNormalize(url)
+    if (!norm.ok) {
+      setScanError(norm.error)
       return
     }
+    const normalized = norm.value
+    if (normalized !== url) setUrl(normalized)
     setIsScanning(true)
     try {
       const response = await fetch('http://localhost:4000/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: trimmed }),
+        body: JSON.stringify({ url: normalized }),
       })
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
@@ -41,7 +73,7 @@ export default function HomePage() {
       } else {
         const data = (await response.json()) as AiScanResponse
         setAiResult(data)
-        setLastScannedUrl(trimmed)
+        setLastScannedUrl(normalized)
       }
     } catch {
       setScanError('Network error while analyzing URL.')
@@ -163,6 +195,15 @@ export default function HomePage() {
                             placeholder="Enter URL to scan (e.g., https://example.com)"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
+                            onPaste={(e) => {
+                              const text = e.clipboardData.getData('text')
+                              const norm = tryNormalize(text)
+                              if (norm.ok) {
+                                e.preventDefault()
+                                setUrl(norm.value)
+                                setScanError(null)
+                              }
+                            }}
                           />
                         </div>
                       </label>
