@@ -10,12 +10,29 @@ type GameListItem = {
   difficulty: 'easy' | 'medium' | 'hard'
 }
 
+type LeaderboardEntry = {
+  userId: string
+  username: string | null
+  score: number
+  rank: number
+}
+
 export default function GamesPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [games, setGames] = useState<GameListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lbWindow, setLbWindow] = useState<'all' | '24h' | '7d' | '30d'>('all')
+  const [leaders, setLeaders] = useState<LeaderboardEntry[]>([])
+  const [me, setMe] = useState<LeaderboardEntry | null>(null)
+  const [lbLoading, setLbLoading] = useState(true)
+  const [lbError, setLbError] = useState<string | null>(null)
+  const LIMIT = 5
+  const [page, setPage] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [hasPrev, setHasPrev] = useState(false)
+  const [hasNext, setHasNext] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -38,6 +55,45 @@ export default function GamesPage() {
       alive = false
     }
   }, [])
+
+  useEffect(() => {
+    let active = true
+    async function loadLeaderboard() {
+      setLbError(null)
+      setLbLoading(true)
+      try {
+        const params = new URLSearchParams()
+        params.set('window', lbWindow)
+        if (user?.id) params.set('userId', user.id)
+        params.set('limit', String(LIMIT))
+        params.set('offset', String(page * LIMIT))
+        const res = await fetch(`http://localhost:4000/api/leaderboard?${params.toString()}`)
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load leaderboard')
+        if (!active) return
+        setLeaders((data.leaders || []) as LeaderboardEntry[])
+        setMe((data.me ?? null) as LeaderboardEntry | null)
+        setTotal(typeof data.total === 'number' ? data.total : 0)
+        setHasPrev(Boolean(data.hasPrev))
+        setHasNext(Boolean(data.hasNext))
+      } catch (e: any) {
+        if (active) {
+          setLbError(e?.message || 'Failed to load leaderboard')
+          setLeaders([])
+          setMe(null)
+          setTotal(0)
+          setHasPrev(false)
+          setHasNext(false)
+        }
+      } finally {
+        if (active) setLbLoading(false)
+      }
+    }
+    loadLeaderboard()
+    return () => {
+      active = false
+    }
+  }, [lbWindow, user?.id, page])
 
   const iconFor = useMemo(() => {
     return (g: GameListItem) => {
@@ -163,9 +219,20 @@ export default function GamesPage() {
                   </div>
                 </div>
                 <div className="rounded-xl border border-secondary/30 bg-white/5 p-6 text-center">
-                  <p className="text-white/70 text-sm">Your Rank</p>
-                  <p className="text-secondary text-6xl font-black my-1 text-glow-magenta">#8</p>
-                  <p className="text-white/60 text-sm">Global position (placeholder)</p>
+                  <p className="text-white/70 text-sm">Your Rank ({lbWindow === 'all' ? 'All-time' : lbWindow})</p>
+                  {lbLoading ? (
+                    <p className="text-white/80">Loading…</p>
+                  ) : me ? (
+                    <>
+                      <p className="text-secondary text-6xl font-black my-1 text-glow-magenta">#{me.rank}</p>
+                      <p className="text-white/60 text-sm">Your {lbWindow === 'all' ? 'total' : 'recent'} score: {me.score}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-secondary text-4xl font-black my-1 text-glow-magenta">—</p>
+                      <p className="text-white/60 text-sm">Not ranked yet</p>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -173,44 +240,69 @@ export default function GamesPage() {
 
               {/* Bottom Leaderboard */}
               <div className="rounded-xl border border-white/20 bg-white/5 p-6 sm:p-8">
-                <h3 className="text-2xl font-bold mb-6 text-white text-glow-magenta">Leaderboard</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-white text-glow-magenta">Leaderboard</h3>
+                  <div className="flex items-center gap-2">
+                    {(['all','24h','7d','30d'] as const).map((w) => (
+                      <button
+                        key={w}
+                        onClick={() => { setLbWindow(w); setPage(0) }}
+                        className={`px-3 py-1 rounded-md text-sm font-semibold transition-colors ${lbWindow===w ? 'bg-secondary/30 text-white border border-secondary/60' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}
+                      >
+                        {w === 'all' ? 'All-time' : w.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-secondary/30 text-secondary">
-                        <th className="p-3 font-semibold tracking-wider text-sm">Rank</th>
-                        <th className="p-3 font-semibold tracking-wider text-sm">Player</th>
-                        <th className="p-3 font-semibold tracking-wider text-sm text-right">Score</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-white/90">
-                      <tr className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4 font-medium">1</td>
-                        <td className="p-4 font-medium">CyberNinja</td>
-                        <td className="p-4 font-bold text-secondary text-right text-glow-magenta">2,500</td>
-                      </tr>
-                      <tr className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4 font-medium">2</td>
-                        <td className="p-4 font-medium">PhishFinder</td>
-                        <td className="p-4 font-bold text-secondary text-right text-glow-magenta">2,340</td>
-                      </tr>
-                      <tr className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4 font-medium">3</td>
-                        <td className="p-4 font-medium">DataGuardian</td>
-                        <td className="p-4 font-bold text-secondary text-right text-glow-magenta">2,110</td>
-                      </tr>
-                      <tr className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4 font-medium">4</td>
-                        <td className="p-4 font-medium">AnonHacker</td>
-                        <td className="p-4 font-bold text-secondary text-right text-glow-magenta">1,980</td>
-                      </tr>
-                      <tr className="bg-secondary/10 border-y border-secondary/40">
-                        <td className="p-4 font-bold text-secondary text-glow-magenta">8</td>
-                        <td className="p-4 font-bold text-secondary text-glow-magenta">You</td>
-                        <td className="p-4 font-bold text-secondary text-right text-glow-magenta">{user?.score ?? 0}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {lbLoading ? (
+                    <p className="text-center text-white/80">Loading…</p>
+                  ) : lbError ? (
+                    <p className="text-center text-red-400">{lbError}</p>
+                  ) : (
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-secondary/30 text-secondary">
+                          <th className="p-3 font-semibold tracking-wider text-sm">Rank</th>
+                          <th className="p-3 font-semibold tracking-wider text-sm">Player</th>
+                          <th className="p-3 font-semibold tracking-wider text-sm text-right">Score</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-white/90">
+                        {leaders.map((row) => (
+                          <tr key={row.userId} className={`border-b border-white/10 hover:bg-white/5 ${row.userId === user?.id ? 'bg-secondary/10 border-y border-secondary/40' : ''}`}>
+                            <td className="p-4 font-medium">{row.rank}</td>
+                            <td className="p-4 font-medium">{row.username ?? 'Anonymous'}</td>
+                            <td className="p-4 font-bold text-secondary text-right text-glow-magenta">{row.score}</td>
+                          </tr>
+                        ))}
+                        {!leaders.length && (
+                          <tr>
+                            <td className="p-4 text-center text-white/60" colSpan={3}>No entries yet</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-4">
+                  <button
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={!hasPrev || lbLoading}
+                    className={`px-3 py-1 rounded-md text-sm font-semibold transition-colors ${(!hasPrev || lbLoading) ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}
+                  >
+                    Prev
+                  </button>
+                  <div className="text-white/70 text-sm">
+                    Page {page + 1} of {Math.max(1, Math.ceil(total / LIMIT))}
+                  </div>
+                  <button
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={!hasNext || lbLoading}
+                    className={`px-3 py-1 rounded-md text-sm font-semibold transition-colors ${(!hasNext || lbLoading) ? 'bg-white/5 text-white/40 cursor-not-allowed' : 'bg-white/10 text-white/80 hover:bg-white/20'}`}
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
               </section>

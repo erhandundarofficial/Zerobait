@@ -7,6 +7,7 @@ import gamesRouter from './routes/games'
 import authRouter from './routes/auth'
 import progressRouter from './routes/progress'
 import aiRouter from './routes/ai'
+import leaderboardRouter from './routes/leaderboard'
 
 dotenv.config()
 
@@ -21,6 +22,7 @@ app.use('/api', gamesRouter)
 app.use('/api', authRouter)
 app.use('/api', progressRouter)
 app.use('/api', aiRouter)
+app.use('/api', leaderboardRouter)
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', service: 'zerobait-backend' })

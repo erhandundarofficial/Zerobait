@@ -44,9 +44,9 @@
 ## Phase 3 – Leaderboard & Social Features
 **Goal:** Expose global competition and refine reputation signals.
 
-- [ ] Implement `/api/leaderboard` endpoint (top users and optional current user rank).
-- [ ] Create a global leaderboard page (with filters for time range, e.g., all-time vs. recent).
-- [ ] Integrate scores from games and learning into the leaderboard.
+- [x] Implement `/api/leaderboard` endpoint (top users and optional current user rank).
+- [x] Create a global leaderboard page (with filters for time range, e.g., all-time vs. recent).
+- [x] Integrate scores from games and learning into the leaderboard.
 - [ ] Add simple reputation logic (e.g., weight reports from users with higher scores more strongly).
 - [ ] Add basic admin/moderation tools to handle obvious abuse (manual or simple admin API).
 - [ ] Polish UI, transitions, and animations for a more engaging experience.
@@ -57,4 +57,5 @@
 - Phase 0 and Phase 1 completed (scanner working end-to-end).
 - Phase 1 enhancements completed: AI hybrid analysis, frontend integration, caching layer, refined AI prompt.
 - Phase 2 core completed: games/content, APIs, scoring, 5 playable games, Games dashboard, and My Progress page.
-- Next: Begin Phase 3 – Leaderboard & Social Features.
+- Phase 3 in progress: Global leaderboard API and UI implemented with time filters (All-time/24h/7d/30d), pagination (5 per page), includes all users, and consistent scoring across filters.
+- Next: Continue Phase 3 – reputation weighting, moderation tools, and UI polish.
