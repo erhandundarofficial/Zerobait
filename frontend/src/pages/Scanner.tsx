@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { flags } from '../config/featureFlags'
 
 type AiScanResponse = {
   ai_summary: string
@@ -13,13 +14,19 @@ export default function ScannerPage() {
   const [aiResult, setAiResult] = useState<AiScanResponse | null>(null)
   const [isReporting, setIsReporting] = useState(false)
   const [reportMessage, setReportMessage] = useState<string | null>(null)
-  const [showRaw, setShowRaw] = useState(false)
+  const [showRaw, setShowRaw] = useState<boolean>(flags.showRawTechnicalByDefault)
   const resultRef = useRef<HTMLDivElement | null>(null)
+  const [showAnim, setShowAnim] = useState(false)
 
   useEffect(() => {
     if (aiResult && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       resultRef.current.focus({ preventScroll: true })
+      if (flags.useAnimations) {
+        setTimeout(() => setShowAnim(true), 10)
+      } else {
+        setShowAnim(true)
+      }
     }
   }, [aiResult])
 
@@ -27,6 +34,7 @@ export default function ScannerPage() {
     e.preventDefault()
     setScanError(null)
     setReportMessage(null)
+    if (flags.useAnimations) setShowAnim(false)
 
     const trimmed = url.trim()
     if (!trimmed) {
@@ -154,9 +162,9 @@ export default function ScannerPage() {
         {scanError && <p className="mt-3 text-sm text-red-400 text-center">{scanError}</p>}
       </div>
 
-      <div className="mt-10 sm:mt-16" ref={resultRef} tabIndex={-1} id="scan-result">
+      <div className="mt-10 sm:mt-16 scroll-mt-24" ref={resultRef} tabIndex={-1} id="scan-result">
         <div
-          className={`flex flex-col items-center gap-6 rounded-xl border p-6 text-center sm:p-8 ${verdictColorClasses[currentVerdict]}`}
+          className={`flex flex-col items-center gap-6 rounded-xl border p-6 text-center sm:p-8 ${verdictColorClasses[currentVerdict]} ${flags.useAnimations ? `transition-all duration-300 ease-out ${showAnim ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}` : ''}`}
         >
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
             <span className="material-symbols-outlined text-4xl">
@@ -204,7 +212,7 @@ export default function ScannerPage() {
         </div>
 
         {aiResult && (
-          <div className="mt-8 space-y-6 w-full">
+          <div className={`mt-8 space-y-6 w-full ${flags.useAnimations ? `transition-all duration-300 ease-out ${showAnim ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}` : ''}`}>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
                 <div className="flex items-center justify-between mb-2">

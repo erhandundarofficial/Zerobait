@@ -20,6 +20,7 @@ export default function HomePage() {
   const [lastScannedUrl, setLastScannedUrl] = useState<string | null>(null)
   const [showRaw, setShowRaw] = useState(false)
   const resultRef = useRef<HTMLDivElement | null>(null)
+  const [showAnim, setShowAnim] = useState(false)
 
   function tryNormalize(raw: string): { ok: true; value: string } | { ok: false; error: string } {
     let s = (raw || '').trim()
@@ -54,6 +55,7 @@ export default function HomePage() {
   async function handleScan() {
     setScanError(null)
     setReportMessage(null)
+    setShowAnim(false)
     const norm = tryNormalize(url)
     if (!norm.ok) {
       setScanError(norm.error)
@@ -146,6 +148,7 @@ export default function HomePage() {
     if (aiResult && resultRef.current) {
       resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       resultRef.current.focus({ preventScroll: true })
+      setTimeout(() => setShowAnim(true), 10)
     }
   }, [aiResult])
 
@@ -247,9 +250,9 @@ export default function HomePage() {
                       </button>
 
                       {/* Result Card */}
-                      <div className="w-full" ref={resultRef} tabIndex={-1} id="scan-result">
+                      <div className="w-full scroll-mt-24" ref={resultRef} tabIndex={-1} id="scan-result">
                         <div
-                          className={`flex flex-col items-center gap-6 rounded-xl border p-6 text-center sm:p-8 ${resultCardClasses}`}
+                          className={`flex flex-col items-center gap-6 rounded-xl border p-6 text-center sm:p-8 ${resultCardClasses} transition-all duration-300 ease-out ${showAnim ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
                         >
                           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
                             <span className="material-symbols-outlined text-4xl">{resultIcon}</span>
@@ -296,7 +299,7 @@ export default function HomePage() {
                     {scanError && <p className="mt-2 text-sm text-red-400">{scanError}</p>}
 
                     {aiResult && (
-                      <div className="mt-10 space-y-6 w-full">
+                      <div className={`mt-10 space-y-6 w-full transition-all duration-300 ease-out ${showAnim ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                           <div className="rounded-xl border border-white/10 bg-white/5 p-5">
                             <div className="flex items-center justify-between mb-2">

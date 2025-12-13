@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Zerobait Phishing Scanner",
+  "version": "0.1.0",
+  "description": "Automatically analyzes the current site for phishing risk using your Zerobait backend and shows a clear risk summary.",
+  "permissions": ["storage", "tabs", "scripting", "activeTab", "windows"],
+  "host_permissions": [
+    "http://localhost:4000/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Zerobait Scanner",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {}
+}
