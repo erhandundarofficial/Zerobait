@@ -17,6 +17,14 @@ type LeaderboardEntry = {
   rank: number
 }
 
+const GROUPED_KEYS = [
+  'url_detective',
+  'social_sleuth',
+  'password_fortress',
+  'email_interceptor',
+  '2fa_guardian',
+] as const
+
 export default function GamesPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -106,6 +114,8 @@ export default function GamesPage() {
     }
   }, [])
 
+  const filteredGames = useMemo(() => games.filter((g) => !GROUPED_KEYS.includes(g.key as any)), [games])
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-white">
       {/* Background grid overlay (purple theme) */}
@@ -176,6 +186,17 @@ export default function GamesPage() {
                 <h3 className="text-white text-lg font-bold mb-3 text-secondary text-glow-magenta">Browse Games</h3>
                 <nav className="flex flex-col gap-2">
                   <Link
+                    to={`/games/essentials`}
+                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-white/90 transition-all hover:bg-secondary/10 hover:border-secondary/40"
+                  >
+                    <span className="material-symbols-outlined text-secondary">verified</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">Phishing Essentials</p>
+                      <p className="text-xs text-white/70 line-clamp-1">URLs, social tricks, passwords, emails, and 2FA basics.</p>
+                    </div>
+                    <span className="material-symbols-outlined text-white/60">chevron_right</span>
+                  </Link>
+                  <Link
                     to={`/games/password-puzzle`}
                     className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-3 text-white/90 transition-all hover:bg-secondary/10 hover:border-secondary/40"
                   >
@@ -211,7 +232,7 @@ export default function GamesPage() {
                     <span className="text-[10px] uppercase rounded-md bg-white/10 px-2 py-1 text-white/70">easy/med/hard</span>
                     <span className="material-symbols-outlined text-white/60">chevron_right</span>
                   </Link>
-                  {games.map((g) => (
+                  {filteredGames.map((g) => (
                     <Link
                       key={g.key}
                       to={`/games/${g.key}`}

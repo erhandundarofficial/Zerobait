@@ -70,7 +70,7 @@ export default function GamePlayPage() {
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [submitting, setSubmitting] = useState(false)
   const [score, setScore] = useState<number | null>(null)
-  const [started, setStarted] = useState(false)
+  const [started] = useState(true)
 
   useEffect(() => {
     if (!key) return
@@ -208,24 +208,7 @@ export default function GamePlayPage() {
                     </div>
                   </div>
 
-                  {/* Game Surface Placeholder */}
-                  {started && (
-                    <div className="rounded-xl border border-secondary/30 bg-white/5 overflow-hidden">
-                      <div className="aspect-video w-full grid place-items-center bg-[radial-gradient(circle_at_center,rgba(255,0,255,0.15),transparent_60%)]">
-                        <span className="text-white/70">Game canvas placeholder</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CTA */}
-                  {!started && (
-                    <button
-                      onClick={() => setStarted(true)}
-                      className="flex min-w-[200px] max-w-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-black text-base font-bold leading-normal tracking-[0.015em] glow-cyan transition-all hover:scale-105"
-                    >
-                      <span className="truncate">Start Game</span>
-                    </button>
-                  )}
+                  
 
                   {/* Quiz/Questions (as current implementation) */}
                   {started && game && (

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type AiScanResponse = {
   ai_summary: string
@@ -13,6 +13,15 @@ export default function ScannerPage() {
   const [aiResult, setAiResult] = useState<AiScanResponse | null>(null)
   const [isReporting, setIsReporting] = useState(false)
   const [reportMessage, setReportMessage] = useState<string | null>(null)
+  const [showRaw, setShowRaw] = useState(false)
+  const resultRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (aiResult && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      resultRef.current.focus({ preventScroll: true })
+    }
+  }, [aiResult])
 
   async function handleScan(e: React.FormEvent) {
     e.preventDefault()
@@ -87,6 +96,28 @@ export default function ScannerPage() {
 
   const currentVerdict = isIdle ? 'IDLE' : riskLevel
 
+  const tech: any = aiResult?.technical_details || {}
+  const vtStats = tech?.virusTotal?.data?.attributes?.last_analysis_stats ?? tech?.virusTotal ?? null
+  const vtMal = Number(vtStats?.malicious ?? 0)
+  const vtSusp = Number(vtStats?.suspicious ?? 0)
+  const vtUndet = Number(vtStats?.undetected ?? 0)
+  const vtHarm = Number(vtStats?.harmless ?? 0)
+  const vtTout = Number(vtStats?.timeout ?? 0)
+  const vtTotal = vtMal + vtSusp + vtUndet + vtHarm + vtTout
+  const vtPct = (n: number) => (vtTotal > 0 ? Math.round((n / vtTotal) * 100) : 0)
+
+  const ssl = tech?.sslLabs
+  const sslStatus: string | undefined = ssl?.statusMessage || ssl?.status
+  const sslEndpoints: any[] = Array.isArray(ssl?.endpoints) ? ssl.endpoints : []
+  const sslUpCount = sslEndpoints.filter((e) => (e.status ?? '').toLowerCase() === 'ready').length
+
+  const whois = tech?.whois?.WhoisRecord || tech?.whois?.WhoisRecord?.registryData || tech?.whois || null
+  const createdRaw: string | undefined = whois?.createdDate || whois?.registryData?.createdDate || whois?.domainCreatedDate
+  const createdAt = createdRaw ? new Date(createdRaw) : null
+  const now = new Date()
+  const domainAgeDays = createdAt ? Math.max(0, Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))) : null
+  const ageLabel = domainAgeDays !== null ? (domainAgeDays < 30 ? 'very new' : domainAgeDays < 180 ? 'new' : 'established') : 'unknown'
+
   return (
     <div className="w-full max-w-3xl">
       <div className="text-center">
@@ -123,7 +154,7 @@ export default function ScannerPage() {
         {scanError && <p className="mt-3 text-sm text-red-400 text-center">{scanError}</p>}
       </div>
 
-      <div className="mt-10 sm:mt-16">
+      <div className="mt-10 sm:mt-16" ref={resultRef} tabIndex={-1} id="scan-result">
         <div
           className={`flex flex-col items-center gap-6 rounded-xl border p-6 text-center sm:p-8 ${verdictColorClasses[currentVerdict]}`}
         >
@@ -173,41 +204,115 @@ export default function ScannerPage() {
         </div>
 
         {aiResult && (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 w-full">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h4 className="mb-2 text-sm font-bold text-white/90">VirusTotal</h4>
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
-{JSON.stringify(aiResult.technical_details?.virusTotal?.data?.attributes?.last_analysis_stats ?? aiResult.technical_details?.virusTotal, null, 2)}
-              </pre>
+          <div className="mt-8 space-y-6 w-full">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-bold text-white/90 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary">security</span>
+                    VirusTotal
+                  </h4>
+                  <span className="text-xs text-white/70">
+                    {vtTotal > 0 ? `${vtMal + vtSusp} flagged / ${vtTotal} vendors` : 'No vendor data'}
+                  </span>
+                </div>
+                {vtTotal > 0 ? (
+                  <>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-white/10 flex">
+                      <div className="h-full bg-red-500" style={{ width: `${vtPct(vtMal)}%` }} />
+                      <div className="h-full bg-yellow-400" style={{ width: `${vtPct(vtSusp)}%` }} />
+                      <div className="h-full bg-emerald-400/80" style={{ width: `${vtPct(vtHarm)}%` }} />
+                      <div className="h-full bg-white/20" style={{ width: `${vtPct(vtUndet + vtTout)}%` }} />
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-white/80">
+                      <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-red-500"></span> Malicious: <span className="font-semibold">{vtMal}</span></div>
+                      <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-yellow-400"></span> Suspicious: <span className="font-semibold">{vtSusp}</span></div>
+                      <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-emerald-400/80"></span> Harmless: <span className="font-semibold">{vtHarm}</span></div>
+                      <div className="flex items-center gap-2"><span className="size-2 rounded-full bg-white/40"></span> Undetected/Timeout: <span className="font-semibold">{vtUndet + vtTout}</span></div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-white/70">Waiting for vendor analysis…</p>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-bold text-white/90 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary">https</span>
+                    SSL Labs
+                  </h4>
+                  <span className="text-xs text-white/70">{sslStatus ? String(sslStatus) : 'No status'}{sslEndpoints.length ? ` • ${sslUpCount}/${sslEndpoints.length} ready` : ''}</span>
+                </div>
+                {sslEndpoints.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {sslEndpoints.map((e: any, idx: number) => (
+                      <span key={idx} className="text-xs px-2 py-1 rounded-md border border-white/10 bg-white/5 text-white/80">
+                        {e.ipAddress || e.serverName || 'endpoint'} • {e.status || 'unknown'} {e.grade ? `• ${e.grade}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-white/70">No endpoints yet.</p>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/5 p-5 sm:col-span-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-bold text-white/90 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary">schedule</span>
+                    WHOIS (Domain Age)
+                  </h4>
+                  <span className="text-xs text-white/70">{domainAgeDays !== null ? `${domainAgeDays} days` : 'unknown'}</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full ${domainAgeDays !== null && domainAgeDays < 30 ? 'bg-red-500' : domainAgeDays !== null && domainAgeDays < 180 ? 'bg-yellow-400' : 'bg-emerald-400'}`}
+                      style={{ width: `${Math.max(8, Math.min(100, (domainAgeDays ?? 0) / 365 * 100))}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-white/80">This domain appears <span className="font-semibold">{ageLabel}</span>. Newer domains are often riskier.</div>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h4 className="mb-2 text-sm font-bold text-white/90">SSL Labs</h4>
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
-{JSON.stringify(aiResult.technical_details?.sslLabs?.endpoints ?? aiResult.technical_details?.sslLabs, null, 2)}
-              </pre>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h4 className="mb-2 text-sm font-bold text-white/90">WHOIS (Domain)</h4>
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80">
-{JSON.stringify(
-  aiResult.technical_details?.whois?.WhoisRecord?.createdDate ??
-    aiResult.technical_details?.whois?.WhoisRecord?.registryData?.createdDate ??
-    aiResult.technical_details?.whois,
-  null,
-  2,
-)}
-              </pre>
-            </div>
+
             {aiResult.technical_details?.screenshot?.base64 && (
               <div className="rounded-xl border border-white/10 bg-white/5 p-4 flex flex-col items-center">
                 <h4 className="mb-2 text-sm font-bold text-white/90">Screenshot</h4>
                 <img
                   src={`data:image/png;base64,${aiResult.technical_details.screenshot.base64}`}
                   alt="Website screenshot"
-                  className="max-h-64 w-auto rounded-lg border border-white/10"
+                  className="max-h-80 w-auto rounded-lg border border-white/10"
                 />
               </div>
             )}
+
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-white/90">Raw technical details</h4>
+                <button
+                  type="button"
+                  onClick={() => setShowRaw((v) => !v)}
+                  className="text-xs font-semibold text-secondary hover:text-white"
+                >
+                  {showRaw ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              {showRaw && (
+                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80 border border-white/10 rounded-lg p-3 bg-black/20">
+{JSON.stringify(aiResult.technical_details?.virusTotal, null, 2)}
+                  </pre>
+                  <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80 border border-white/10 rounded-lg p-3 bg-black/20">
+{JSON.stringify(aiResult.technical_details?.sslLabs, null, 2)}
+                  </pre>
+                  <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words text-xs text-white/80 border border-white/10 rounded-lg p-3 bg-black/20 sm:col-span-2">
+{JSON.stringify(aiResult.technical_details?.whois, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import GamePlayPage from './pages/GamePlay.tsx'
 import PasswordPuzzlePage from './pages/PasswordPuzzle.tsx'
 import DomainDetectivePage from './pages/DomainDetective.tsx'
 import SpotThePhishPage from './pages/SpotThePhish.tsx'
+import EssentialsPage from './pages/Essentials.tsx'
 import ScannerPage from './pages/Scanner.tsx'
 import ProgressPage from './pages/Progress.tsx'
 import { AuthProvider } from './auth/AuthProvider.tsx'
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
             <Route index element={<HomePage />} />
             <Route path="scanner" element={<ScannerPage />} />
             <Route path="games" element={<GamesPage />} />
+            <Route path="games/essentials" element={<EssentialsPage />} />
             <Route path="games/password-puzzle" element={<PasswordPuzzlePage />} />
             <Route path="games/domain-detective" element={<DomainDetectivePage />} />
             <Route path="games/spot-the-phish" element={<SpotThePhishPage />} />

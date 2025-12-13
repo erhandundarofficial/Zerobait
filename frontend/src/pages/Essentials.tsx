@@ -1,40 +1,62 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 
-export default function LoginPage() {
-  const { login, user, logout } = useAuth()
+type GameListItem = {
+  key: string
+  title: string
+  description: string
+  type: string
+  difficulty: 'easy' | 'medium' | 'hard'
+}
+
+const GROUPED_KEYS = [
+  'url_detective',
+  'social_sleuth',
+  'password_fortress',
+  'email_interceptor',
+  '2fa_guardian',
+] as const
+
+export default function EssentialsPage() {
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [games, setGames] = useState<GameListItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      await login(username.trim(), password)
-      navigate('/')
-    } catch (e: any) {
-      setError(e?.message || 'Login failed')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      setError(null)
+      setLoading(true)
+      try {
+        const res = await fetch('http://localhost:4000/api/games')
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load games')
+        if (alive) setGames((data.games || []) as GameListItem[])
+      } catch (e: any) {
+        if (alive) setError(e?.message || 'Failed to load games')
+      } finally {
+        if (alive) setLoading(false)
+      }
     }
-  }
+    load()
+    return () => { alive = false }
+  }, [])
+
+  const essentials = games.filter(g => GROUPED_KEYS.includes(g.key as any))
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark font-display text-white">
-      <div className="absolute inset-0 z-0 h-full w-full bg-transparent">
+      <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:3rem_3rem]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,rgba(0,255,255,0.2),transparent)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,rgba(255,0,255,0.15),transparent)]"></div>
       </div>
 
       <div className="layout-container z-10 flex h-full grow flex-col">
         <div className="flex flex-1 justify-center px-4 sm:px-10 md:px-20 lg:px-40 py-5">
           <div className="layout-content-container flex w-full max-w-[960px] flex-1 flex-col">
-            {/* Header (same style as dashboard) */}
             <header className="flex items-center justify-between whitespace-nowrap px-4 sm:px-10 py-3">
               <div className="flex items-center gap-4">
                 <div className="text-primary">
@@ -66,7 +88,7 @@ export default function LoginPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-white/80">Hello, <span className="text-primary font-semibold">{user.username ?? 'user'}</span></span>
                       <button
-                        onClick={() => { logout(); navigate('/'); }}
+                        onClick={() => { logout(); navigate('/') }}
                         className="flex h-9 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white/10 px-3 text-xs font-semibold leading-normal text-gray-200 transition-colors hover:bg-white/20"
                       >
                         Log out
@@ -77,65 +99,42 @@ export default function LoginPage() {
               </div>
             </header>
 
-            {/* Centered Auth Card */}
-            <main className="flex-grow flex flex-col justify-center items-center py-10 sm:py-20">
-              <div className="w-full max-w-md p-8 bg-surface-dark/50 border border-white/10 rounded-xl backdrop-blur-sm">
-                <div className="text-center mb-8">
-                  <h1 className="text-4xl font-bold text-glow-cyan">Log In</h1>
-                  <p className="mt-2 text-white/70">Welcome back. Enter your credentials to continue.</p>
+            <div className="space-y-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-secondary font-bold uppercase tracking-wider text-glow-magenta">Phishing Essentials</p>
+                  <h1 className="text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.03em]">Choose a core skill</h1>
+                  <p className="text-white/70 mt-2 max-w-2xl">Five foundational challenges to sharpen your instincts: URLs, social tricks, passwords, email clues, and 2FA safety.</p>
                 </div>
-
-                <form onSubmit={onSubmit} className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-bold text-white/80">Username</label>
-                    <div className="relative flex items-center">
-                      <span className="material-symbols-outlined absolute left-3 text-white/50">person</span>
-                      <input
-                        className="form-input w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        autoComplete="username"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-bold text-white/80">Password</label>
-                    <div className="relative flex items-center">
-                      <span className="material-symbols-outlined absolute left-3 text-white/50">lock</span>
-                      <input
-                        type="password"
-                        className="form-input w-full bg-black/30 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-white/50 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="current-password"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {error && <p className="text-sm text-red-400">{error}</p>}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-black text-base font-bold leading-normal tracking-[0.015em] glow-cyan-soft transition-all hover:scale-105 disabled:opacity-70"
-                  >
-                    <span className="truncate">{loading ? 'Logging in…' : 'Log In'}</span>
-                  </button>
-                </form>
-
-                <div className="mt-8 text-center">
-                  <p className="text-sm text-white/60">
-                    Don’t have an account?{' '}
-                    <Link to="/signup" className="font-bold text-primary hover:underline">Sign up</Link>
-                  </p>
-                </div>
+                <Link to="/games" className="text-sm font-bold text-secondary hover:text-white transition-colors">Back</Link>
               </div>
-            </main>
 
-            {/* Footer (same style as dashboard) */}
+              {loading && <p className="mt-4 text-white/80">Loading…</p>}
+              {error && <p className="mt-4 text-red-400">{error}</p>}
+
+              {!loading && !error && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {essentials.map((g) => (
+                    <Link
+                      key={g.key}
+                      to={`/games/${g.key}`}
+                      className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 p-4 text-white/90 transition-all hover:bg-secondary/10 hover:border-secondary/40"
+                    >
+                      <span className="material-symbols-outlined text-secondary">
+                        {g.key.includes('url') ? 'link' : g.key.includes('social') ? 'group' : g.key.includes('password') ? 'password' : g.key.includes('email') ? 'mail' : 'verified_user'}
+                      </span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-white">{g.title}</p>
+                        <p className="text-xs text-white/70 line-clamp-2">{g.description}</p>
+                      </div>
+                      <span className="text-[10px] uppercase rounded-md bg-white/10 px-2 py-1 text-white/70">{g.difficulty}</span>
+                      <span className="material-symbols-outlined text-white/60">chevron_right</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <footer className="mt-auto w-full border-t border-white/10 bg-background-dark/50 py-8 backdrop-blur-sm">
               <div className="mx-auto flex max-w-[960px] flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-10">
                 <p className="text-sm text-white/60">© 2024 Zerobait. All rights reserved.</p>

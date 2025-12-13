@@ -151,7 +151,7 @@ export default function SignupPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-black text-base font-bold leading-normal tracking-[0.015em] glow-cyan transition-all hover:scale-105 disabled:opacity-70"
+                    className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-black text-base font-bold leading-normal tracking-[0.015em] glow-cyan-soft transition-all hover:scale-105 disabled:opacity-70"
                   >
                     <span className="truncate">{loading ? 'Creating account…' : 'Sign Up'}</span>
                   </button>
